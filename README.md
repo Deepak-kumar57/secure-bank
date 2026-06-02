@@ -49,6 +49,7 @@ securebank/
 createdb -U postgres securebank
 psql -U postgres -d securebank -f database/schema.sql
 psql -U postgres -d securebank -f database/seed.sql
+psql -U postgres -d securebank -f database/migration_001_account_applications.sql
 ```
 
 If you need to start over, drop and recreate:
@@ -57,6 +58,8 @@ If you need to start over, drop and recreate:
 dropdb -U postgres securebank && createdb -U postgres securebank
 psql -U postgres -d securebank -f database/schema.sql
 psql -U postgres -d securebank -f database/seed.sql
+psql -U postgres -d securebank -f database/migration_001_account_applications.sql
+
 ```
 
 ### 2. Backend
