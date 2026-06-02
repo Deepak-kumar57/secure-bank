@@ -12,17 +12,25 @@ export default function StaffDashboard() {
     const [pending,  setPending]  = useState([]);
     const [error, setError] = useState('');
 
+    const [applications, setApplications] = useState([]);
+
     useEffect(() => {
         (async () => {
             try {
-                const [a, p] = await Promise.all([
+                const fetches = [
                     api.get('/staff/accounts'),
                     api.get('/staff/withdrawals/pending'),
-                ]);
-                setAccounts(a.data); setPending(p.data);
+                ];
+                if (role === 'admin' || role === 'teller') {
+                    fetches.push(api.get('/staff/applications'));
+                }
+                const results = await Promise.all(fetches);
+                setAccounts(results[0].data);
+                setPending(results[1].data);
+                if (results[2]) setApplications(results[2].data.filter(a => a.status === 'pending'));
             } catch (err) { setError(err.message); }
         })();
-    }, []);
+    }, [role]);
 
     const totalBalance = accounts
         .filter((a) => a.status === 'active')
@@ -38,6 +46,9 @@ export default function StaffDashboard() {
                 <StatCard label="Accounts at branch"   value={accounts.length} />
                 <StatCard label="Total active balance" value={formatCurrency(totalBalance)} tone="primary" />
                 <StatCard label="Pending withdrawals"  value={pending.length} tone={pending.length ? 'warning' : ''} />
+                {(role === 'admin' || role === 'teller') &&
+                    <StatCard label="Pending applications" value={applications.length} tone={applications.length ? 'warning' : ''} />
+                }
             </div>
 
             <div className="action-row">
@@ -45,6 +56,7 @@ export default function StaffDashboard() {
                     <Link to="/staff/deposit" className="btn btn-primary">New Deposit</Link>
                     <Link to="/staff/withdraw" className="btn btn-primary">Process Withdrawals</Link>
                     <Link to="/staff/create-account" className="btn">Create Account</Link>
+                    <Link to="/staff/applications" className="btn">Applications</Link>
                 </>}
                 <Link to="/staff/accounts" className="btn">Manage Accounts</Link>
                 {(role === 'admin' || role === 'manager' || role === 'analyst') &&

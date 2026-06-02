@@ -43,8 +43,11 @@ export default function Navbar() {
                         {(role === 'admin' || role === 'teller') && <NavLink to="/staff/deposit">Deposit</NavLink>}
                         {(role === 'admin' || role === 'teller') && <NavLink to="/staff/withdraw">Withdrawals</NavLink>}
                         {(role === 'admin' || role === 'teller') && <NavLink to="/staff/create-account">Create Account</NavLink>}
+                        {(role === 'admin' || role === 'teller') && <NavLink to="/staff/applications">Applications</NavLink>}
                         {(role === 'analyst' || role === 'admin' || role === 'manager') && <NavLink to="/staff/fraud">Fraud</NavLink>}
                         {(role === 'admin' || role === 'manager') && <NavLink to="/admin">Admin</NavLink>}
+                        {role === 'admin' && <NavLink to="/admin/branches">Branches</NavLink>}
+                        {role === 'admin' && <NavLink to="/admin/staff">Staff</NavLink>}
                         {role === 'admin' && <NavLink to="/admin/integrity">Integrity</NavLink>}
                         {(role === 'admin' || role === 'manager' || role === 'analyst') && <NavLink to="/admin/logs">Logs</NavLink>}
                         {(role === 'admin' || role === 'manager') && <NavLink to="/admin/reports">Reports</NavLink>}

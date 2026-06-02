@@ -234,6 +234,24 @@ async function listUsers(req, res) {
     }
 }
 
+// ---------- GET /api/admin/staff ----------
+async function listStaff(req, res) {
+    try {
+        const r = await query(
+            `SELECT s.staff_id, s.full_name, s.email, s.phone_number, s.role,
+                    s.branch_id, b.name AS branch_name, s.access_level,
+                    s.status, s.last_login, s.created_at
+               FROM bank_staff s
+               LEFT JOIN branch b ON b.branch_id = s.branch_id
+              ORDER BY s.staff_id`
+        );
+        return res.json(r.rows);
+    } catch (err) {
+        console.error('listStaff:', err);
+        return res.status(500).json({ error: 'Failed to load staff' });
+    }
+}
+
 module.exports = {
     createStaff,
     createBranch,
@@ -245,4 +263,5 @@ module.exports = {
     listFraudRules,
     updateFraudRule,
     listUsers,
+    listStaff,
 };

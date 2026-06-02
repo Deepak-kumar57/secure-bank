@@ -11,5 +11,7 @@ router.get ('/accounts',            c.getMyAccounts);
 router.get ('/transactions',        c.getMyTransactions);
 router.post('/transfer',            c.customerTransfer);
 router.post('/withdrawal-request',  c.customerWithdrawalRequest);
+router.get ('/applications',        c.getMyApplications);
+router.post('/apply-account',       c.applyForAccount);
 
 module.exports = router;

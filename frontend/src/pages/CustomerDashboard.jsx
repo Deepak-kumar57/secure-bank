@@ -11,15 +11,18 @@ export default function CustomerDashboard() {
     const [tx, setTx] = useState([]);
     const [error, setError] = useState('');
 
+    const [applications, setApplications] = useState([]);
+
     useEffect(() => {
         (async () => {
             try {
-                const [m, a, t] = await Promise.all([
+                const [m, a, t, ap] = await Promise.all([
                     api.get('/customer/me'),
                     api.get('/customer/accounts'),
                     api.get('/customer/transactions'),
+                    api.get('/customer/applications'),
                 ]);
-                setMe(m.data); setAccounts(a.data); setTx(t.data);
+                setMe(m.data); setAccounts(a.data); setTx(t.data); setApplications(ap.data);
             } catch (err) {
                 setError(err.message);
             }
@@ -90,6 +93,29 @@ export default function CustomerDashboard() {
                     </table>
                 </div>
             </div>
+
+            {applications.length > 0 && (
+                <div className="card">
+                    <h2>Account Applications</h2>
+                    <table className="data-table">
+                        <thead>
+                            <tr><th>ID</th><th>Type</th><th>Branch</th><th>Status</th><th>Applied</th><th>Notes</th></tr>
+                        </thead>
+                        <tbody>
+                            {applications.map((a) => (
+                                <tr key={a.application_id}>
+                                    <td>#{a.application_id}</td>
+                                    <td>{a.account_type}</td>
+                                    <td>{a.branch_name || '—'}</td>
+                                    <td><StatusBadge status={a.status} /></td>
+                                    <td>{formatDateTime(a.created_at)}</td>
+                                    <td>{a.review_notes || '—'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
             <div className="action-row">
                 <Link to="/customer/transfer" className="btn btn-primary">Make a Transfer</Link>

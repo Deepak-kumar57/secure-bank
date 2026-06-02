@@ -31,8 +31,21 @@ async function customerRegister(req, res) {
         );
 
         const user = result.rows[0];
+
+        // If the registrant included account application fields, create an application
+        let application = null;
+        const { account_type, preferred_branch_id } = req.body;
+        if (account_type && preferred_branch_id) {
+            const appResult = await query(
+                `INSERT INTO account_application (user_id, account_type, preferred_branch_id)
+                 VALUES ($1, $2, $3) RETURNING *`,
+                [user.user_id, account_type, preferred_branch_id]
+            );
+            application = appResult.rows[0];
+        }
+
         const token = signCustomerToken(user);
-        return res.status(201).json({ token, user });
+        return res.status(201).json({ token, user, application });
     } catch (err) {
         console.error('customerRegister:', err);
         return res.status(500).json({ error: 'Registration failed' });

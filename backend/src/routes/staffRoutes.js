@@ -16,5 +16,8 @@ router.post  ('/transfer',                            authorizeRoles('admin', 't
 router.patch ('/accounts/:id/freeze',                 authorizeRoles('admin', 'manager'), c.freezeAccount);
 router.patch ('/accounts/:id/unfreeze',               authorizeRoles('admin', 'manager'), c.unfreezeAccount);
 router.patch ('/accounts/:id/close',                  authorizeRoles('admin'),            c.closeAccount);
+router.get   ('/applications',                        authorizeRoles('admin', 'teller'),  c.listApplications);
+router.patch ('/applications/:id/approve',            authorizeRoles('admin', 'teller'),  c.approveApplication);
+router.patch ('/applications/:id/reject',             authorizeRoles('admin', 'teller'),  c.rejectApplication);
 
 module.exports = router;

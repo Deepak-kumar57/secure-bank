@@ -1,14 +1,28 @@
 // frontend/src/pages/CustomerRegister.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 
 export default function CustomerRegister() {
     const { customerRegister } = useAuth();
     const navigate = useNavigate();
-    const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', confirm: '' });
+    const [form, setForm] = useState({
+        full_name: '', email: '', phone: '', password: '', confirm: '',
+        account_type: 'savings', preferred_branch_id: '',
+    });
+    const [branches, setBranches] = useState([]);
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
+
+    useEffect(() => {
+        api.get('/branches')
+            .then(({ data }) => {
+                setBranches(data);
+                if (data.length) setForm((f) => ({ ...f, preferred_branch_id: String(data[0].branch_id) }));
+            })
+            .catch(() => {});
+    }, []);
 
     async function onSubmit(e) {
         e.preventDefault();
@@ -21,13 +35,19 @@ export default function CustomerRegister() {
             setError('Password must be at least 6 characters');
             return;
         }
+        if (!form.preferred_branch_id) {
+            setError('Please select a branch');
+            return;
+        }
         setBusy(true);
         try {
             await customerRegister({
-                full_name: form.full_name.trim(),
-                email:     form.email.trim(),
-                phone:     form.phone.trim(),
-                password:  form.password,
+                full_name:           form.full_name.trim(),
+                email:               form.email.trim(),
+                phone:               form.phone.trim(),
+                password:            form.password,
+                account_type:        form.account_type,
+                preferred_branch_id: Number(form.preferred_branch_id),
             });
             navigate('/customer');
         } catch (err) {
@@ -39,9 +59,10 @@ export default function CustomerRegister() {
 
     return (
         <div className="auth-card card">
-            <h2>Create Customer Account</h2>
+            <h2>Open a SecureBank Account</h2>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={onSubmit}>
+                <h3>Personal Information</h3>
                 <label>Full Name
                     <input required value={form.full_name}
                         onChange={(e) => setForm({ ...form, full_name: e.target.value })}/>
@@ -62,16 +83,37 @@ export default function CustomerRegister() {
                     <input type="password" required value={form.confirm}
                         onChange={(e) => setForm({ ...form, confirm: e.target.value })}/>
                 </label>
+
+                <h3>Account Application</h3>
+                <label>Account Type
+                    <select value={form.account_type}
+                        onChange={(e) => setForm({ ...form, account_type: e.target.value })}>
+                        <option value="savings">Savings</option>
+                        <option value="current">Current</option>
+                    </select>
+                </label>
+                <label>Preferred Branch
+                    <select required value={form.preferred_branch_id}
+                        onChange={(e) => setForm({ ...form, preferred_branch_id: e.target.value })}>
+                        <option value="">Select branch…</option>
+                        {branches.map((b) => (
+                            <option key={b.branch_id} value={b.branch_id}>
+                                {b.name} — {b.location}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
                 <button type="submit" disabled={busy} className="btn btn-primary">
-                    {busy ? 'Creating…' : 'Register'}
+                    {busy ? 'Submitting…' : 'Register & Apply'}
                 </button>
             </form>
             <p className="muted">
                 Already have an account? <Link to="/login">Sign in</Link>
             </p>
             <p className="muted small">
-                Note: only staff can create bank accounts. After registering you'll need a teller
-                to open your first account, or use a seeded customer login.
+                Your account application will be reviewed by a bank officer.
+                You will be able to use your account once it is approved.
             </p>
         </div>
     );

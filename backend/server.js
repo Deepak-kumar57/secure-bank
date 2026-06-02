@@ -22,6 +22,18 @@ app.get('/api/health', (req, res) => {
     res.json({ ok: true, service: 'SecureBank API', time: new Date().toISOString() });
 });
 
+// Public branch list (needed by registration form before auth)
+app.get('/api/branches', async (req, res) => {
+    try {
+        const { query } = require('./src/config/db');
+        const r = await query('SELECT branch_id, name, location FROM branch ORDER BY branch_id');
+        res.json(r.rows);
+    } catch (err) {
+        console.error('public branches:', err);
+        res.status(500).json({ error: 'Failed to load branches' });
+    }
+});
+
 // Routes
 app.use('/api/auth',     authRoutes);
 app.use('/api/customer', customerRoutes);

@@ -21,6 +21,9 @@ import AccountManagement  from './pages/AccountManagement';
 import FraudAlerts        from './pages/FraudAlerts';
 
 import AdminDashboard     from './pages/AdminDashboard';
+import ManageBranches     from './pages/ManageBranches';
+import ManageStaff        from './pages/ManageStaff';
+import AccountApplications from './pages/AccountApplications';
 import IntegrityCheck     from './pages/IntegrityCheck';
 import AuditLogs          from './pages/AuditLogs';
 import Reports            from './pages/Reports';
@@ -50,9 +53,12 @@ export default function App() {
                     <Route path="/staff/withdraw"         element={<ProtectedRoute kind="staff" roles={['admin','teller']}><Withdraw /></ProtectedRoute>} />
                     <Route path="/staff/create-account"   element={<ProtectedRoute kind="staff" roles={['admin','teller']}><CreateAccount /></ProtectedRoute>} />
                     <Route path="/staff/fraud"            element={<ProtectedRoute kind="staff" roles={['admin','manager','analyst']}><FraudAlerts /></ProtectedRoute>} />
+                    <Route path="/staff/applications"    element={<ProtectedRoute kind="staff" roles={['admin','teller']}><AccountApplications /></ProtectedRoute>} />
 
                     {/* Admin / Manager */}
                     <Route path="/admin"                  element={<ProtectedRoute kind="staff" roles={['admin','manager']}><AdminDashboard /></ProtectedRoute>} />
+                    <Route path="/admin/branches"         element={<ProtectedRoute kind="staff" roles={['admin']}><ManageBranches /></ProtectedRoute>} />
+                    <Route path="/admin/staff"             element={<ProtectedRoute kind="staff" roles={['admin']}><ManageStaff /></ProtectedRoute>} />
                     <Route path="/admin/integrity"        element={<ProtectedRoute kind="staff" roles={['admin']}><IntegrityCheck /></ProtectedRoute>} />
                     <Route path="/admin/logs"             element={<ProtectedRoute kind="staff" roles={['admin','manager','analyst']}><AuditLogs /></ProtectedRoute>} />
                     <Route path="/admin/reports"          element={<ProtectedRoute kind="staff" roles={['admin','manager']}><Reports /></ProtectedRoute>} />

@@ -264,10 +264,55 @@ async function customerWithdrawalRequest(req, res) {
     }
 }
 
+// ---------- GET /api/customer/applications ----------
+async function getMyApplications(req, res) {
+    try {
+        const r = await query(
+            `SELECT a.*, b.name AS branch_name
+               FROM account_application a
+               LEFT JOIN branch b ON b.branch_id = a.preferred_branch_id
+              WHERE a.user_id = $1
+              ORDER BY a.created_at DESC`,
+            [req.auth.user_id]
+        );
+        return res.json(r.rows);
+    } catch (err) {
+        console.error('getMyApplications:', err);
+        return res.status(500).json({ error: 'Failed to load applications' });
+    }
+}
+
+// ---------- POST /api/customer/apply-account ----------
+async function applyForAccount(req, res) {
+    const { account_type, preferred_branch_id } = req.body || {};
+    if (!account_type || !preferred_branch_id) {
+        return res.status(400).json({ error: 'account_type and preferred_branch_id are required' });
+    }
+    if (!['savings', 'current'].includes(account_type)) {
+        return res.status(400).json({ error: "account_type must be 'savings' or 'current'" });
+    }
+    try {
+        const b = await query(`SELECT 1 FROM branch WHERE branch_id = $1`, [preferred_branch_id]);
+        if (b.rowCount === 0) return res.status(404).json({ error: 'Branch not found' });
+
+        const r = await query(
+            `INSERT INTO account_application (user_id, account_type, preferred_branch_id)
+             VALUES ($1, $2, $3) RETURNING *`,
+            [req.auth.user_id, account_type, preferred_branch_id]
+        );
+        return res.status(201).json(r.rows[0]);
+    } catch (err) {
+        console.error('applyForAccount:', err);
+        return res.status(500).json({ error: 'Application failed' });
+    }
+}
+
 module.exports = {
     getMe,
     getMyAccounts,
     getMyTransactions,
     customerTransfer,
     customerWithdrawalRequest,
+    getMyApplications,
+    applyForAccount,
 };

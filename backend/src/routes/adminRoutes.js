@@ -14,6 +14,7 @@ router.patch ('/fraud-rules/:id',    authorizeRoles('admin'), c.updateFraudRule)
 
 // Read endpoints — accessible by admin/manager (and integrity by admin only).
 router.get   ('/branches',           c.listBranches);
+router.get   ('/staff',              authorizeRoles('admin'),                             c.listStaff);
 router.get   ('/users',              authorizeRoles('admin', 'manager'),                  c.listUsers);
 router.get   ('/dashboard',          authorizeRoles('admin', 'manager'),                  c.dashboard);
 router.get   ('/logs',               authorizeRoles('admin', 'manager', 'analyst'),       c.listLogs);

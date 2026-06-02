@@ -400,6 +400,81 @@ async function closeAccount(req, res) {
     return res.json({ message: 'Account closed' });
 }
 
+// ---------- GET /api/staff/applications ----------
+async function listApplications(req, res) {
+    try {
+        const r = await query(
+            `SELECT a.*, u.full_name AS customer_name, u.email AS customer_email,
+                    b.name AS branch_name
+               FROM account_application a
+               JOIN users u ON u.user_id = a.user_id
+               LEFT JOIN branch b ON b.branch_id = a.preferred_branch_id
+              ORDER BY CASE a.status WHEN 'pending' THEN 0 ELSE 1 END, a.created_at DESC`
+        );
+        return res.json(r.rows);
+    } catch (err) {
+        console.error('listApplications:', err);
+        return res.status(500).json({ error: 'Failed to load applications' });
+    }
+}
+
+// ---------- PATCH /api/staff/applications/:id/approve ----------
+async function approveApplication(req, res) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const appRes = await client.query(
+            `SELECT * FROM account_application WHERE application_id = $1 FOR UPDATE`,
+            [req.params.id]
+        );
+        const app = appRes.rows[0];
+        if (!app) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Application not found' }); }
+        if (app.status !== 'pending') { await client.query('ROLLBACK'); return res.status(400).json({ error: `Application is already ${app.status}` }); }
+
+        const acctRes = await client.query(
+            `INSERT INTO account (user_id, branch_id, account_type, balance, status)
+             VALUES ($1, $2, $3, 0, 'active') RETURNING *`,
+            [app.user_id, app.preferred_branch_id, app.account_type]
+        );
+
+        await client.query(
+            `UPDATE account_application
+                SET status = 'approved', reviewed_by = $1, reviewed_at = NOW()
+              WHERE application_id = $2`,
+            [req.auth.staff_id, req.params.id]
+        );
+
+        await client.query('COMMIT');
+        return res.json({ message: 'Application approved', account: acctRes.rows[0] });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('approveApplication:', err);
+        return res.status(500).json({ error: 'Approval failed' });
+    } finally {
+        client.release();
+    }
+}
+
+// ---------- PATCH /api/staff/applications/:id/reject ----------
+async function rejectApplication(req, res) {
+    const { review_notes } = req.body || {};
+    try {
+        const r = await query(
+            `UPDATE account_application
+                SET status = 'rejected', reviewed_by = $1, review_notes = $2, reviewed_at = NOW()
+              WHERE application_id = $3 AND status = 'pending'
+              RETURNING *`,
+            [req.auth.staff_id, review_notes || null, req.params.id]
+        );
+        if (r.rowCount === 0) return res.status(404).json({ error: 'Pending application not found' });
+        return res.json({ message: 'Application rejected', application: r.rows[0] });
+    } catch (err) {
+        console.error('rejectApplication:', err);
+        return res.status(500).json({ error: 'Rejection failed' });
+    }
+}
+
 module.exports = {
     listAccounts,
     createAccount,
@@ -410,4 +485,7 @@ module.exports = {
     freezeAccount,
     unfreezeAccount,
     closeAccount,
+    listApplications,
+    approveApplication,
+    rejectApplication,
 };
